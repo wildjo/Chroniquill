@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1299FA482D8B8BAB00B4A87C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 1299FA472D8B8BAB00B4A87C /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1299FA252D8B70DC00B4A87C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		1299FA132D8B70DA00B4A87C /* Chroniquill.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chroniquill.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1299FA242D8B70DC00B4A87C /* ChroniquillTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChroniquillTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1299FA2E2D8B70DC00B4A87C /* ChroniquillUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChroniquillUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1299FA472D8B8BAB00B4A87C /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				1299FA272D8B70DC00B4A87C /* ChroniquillTests */,
 				1299FA312D8B70DC00B4A87C /* ChroniquillUITests */,
 				1299FA142D8B70DA00B4A87C /* Products */,
+				1299FA472D8B8BAB00B4A87C /* .gitignore */,
 			);
 			sourceTree = "<group>";
 		};
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1299FA482D8B8BAB00B4A87C /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

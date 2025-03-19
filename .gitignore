@@ -1,3 +1,10 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
@@ -5,11 +12,11 @@
 ## User settings
 xcuserdata/
 
-## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
+## Compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
 *.xccheckout
 
-## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
+## Compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
 build/
 DerivedData/
 *.moved-aside
@@ -39,31 +46,21 @@ playground.xcworkspace
 # Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
 # Packages/
 # Package.pins
-# Package.resolved
-# *.xcodeproj
-#
-# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
-# hence it is not needed unless you have added a package configuration file to your project
-# .swiftpm
-
+Package.resolved
+.swiftpm/
 .build/
 
 # CocoaPods
 #
-# We recommend against adding the Pods directory to your .gitignore. However
+# We recommend against adding the Pods directory to your .gitignore. However,
 # you should judge for yourself, the pros and cons are mentioned at:
 # https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
-#
-# Pods/
-#
-# Add this line if you want to avoid checking in source code from the Xcode workspace
-# *.xcworkspace
+Pods/
+Podfile.lock
 
 # Carthage
 #
 # Add this line if you want to avoid checking in source code from Carthage dependencies.
-# Carthage/Checkouts
-
 Carthage/Build/
 
 # Accio dependency management
@@ -84,7 +81,46 @@ fastlane/test_output
 
 # Code Injection
 #
-# After new code Injection tools there's a generated folder /iOSInjectionProject
+# After new code injection tools, there's a generated folder /iOSInjectionProject
 # https://github.com/johnno1962/injectionforxcode
-
 iOSInjectionProject/
+
+# Xcode Project Metadata
+*.xcworkspace/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/project.pbxproj
+*.xccheckout
+*.xcsettings
+
+# Build artifacts
+*.app
+*.dSYM
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+*.swiftsource
+*.ll
+*.bc
+*.o
+*.d
+*.tbd
+*.a
+*.dylib
+*.so
+*.out
+*.bin
+*.exe
+
+# Preview Content & Auto-Generated Assets
+*.xcassets/Assets.car
+Preview Content/
+
+# Secrets & Environment Variables
+Secrets.plist
+.env
+*.key
+*.pem
+*.crt
+
+# Git metadata (safety)
+.git/
