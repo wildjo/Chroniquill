@@ -1,0 +1,5 @@
+DEVELOPMENT_TEAM =
+ORGANIZATION_IDENTIFIER = com.example  // Generic default
+PRODUCT_BUNDLE_IDENTIFIER = $(ORGANIZATION_IDENTIFIER).chroniquill
+
+#include? "DeveloperSettings.xcconfig"
