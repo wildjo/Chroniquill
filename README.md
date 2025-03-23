@@ -9,7 +9,9 @@ The static site generator for long-form and short-form writing in the cloud.
 
 Be sure to add a DeveloperSettings.xconfig to your project containing:
 
-```DEVELOPMENT_TEAM = XXXXXXXXXX   // Your real team ID
-ORGANIZATION_IDENTIFIER = com.YourRealTeamID```
+```
+DEVELOPMENT_TEAM = XXXXXXXXXX   // Your real team ID
+ORGANIZATION_IDENTIFIER = com.YourRealTeamID
+```
 
 Thanks to [@samwize](https://samwize.com/2020/11/20/using-xcconfig-to-configure-to-your-developer-account/) for the tutorial on how to protect your team ID.
