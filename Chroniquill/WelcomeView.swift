@@ -11,15 +11,22 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Chroniquill")
-                .font(.largeTitle)
-                .bold()
+            Spacer(minLength: 40)
+
+            GeometryReader { geo in
+                Image("chroniquill-logos")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: geo.size.width * 0.8)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .frame(height: 160) // constrain vertical space for GeometryReader
 
             Text("The static site generator for long-form and short-form writing in the cloud.")
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-                .padding(.bottom, 100)
-    
+                .padding(.bottom, 60)
+        
             Button(action: selectFolder) {
                 Text("Create Home")
                     .bold()
