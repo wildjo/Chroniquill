@@ -1,4 +1,4 @@
-<img src="chroniquill-logo.png" alt="ChroniQuill Logo" width="400"/>
+<img src="chroniquill-logo.png" alt="ChroniQuill Logo" width="399"/>
 
 
 The static site generator for long-form and short-form writing in the cloud.
