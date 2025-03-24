@@ -1,8 +1,8 @@
 //
 //  ChroniquillApp.swift
-//  Chroniquill
+//  ChroniQuill
 //
-//  Created by Johanna Wilder on 3/19/25.
+//  Created by Johanna Wilder and ChatGPT on 3/19/25.
 //
 
 import SwiftUI

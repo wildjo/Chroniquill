@@ -1,7 +1,8 @@
 //
 //  WelcomeView.swift
-//  Chroniquill
+//  ChroniQuill
 //
+
 
 import SwiftUI
 import UniformTypeIdentifiers
