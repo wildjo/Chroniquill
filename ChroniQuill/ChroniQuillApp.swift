@@ -1,5 +1,5 @@
 //
-//  ChroniquillApp.swift
+//  ChroniQuillApp.swift
 //  ChroniQuill
 //
 //  Created by Johanna Wilder and ChatGPT on 3/19/25.
@@ -8,12 +8,16 @@
 import SwiftUI
 
 @main
-struct ChroniquillApp: App {
+struct ChroniQuillApp: App {
     @State private var showingSettings = false
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            WelcomeView(settings: SettingsModel.shared) { selectedURL in
+                Task {
+                    await SettingsModel.shared.setHomeDirectory(selectedURL)
+                }
+            }
                 .sheet(isPresented: $showingSettings) {
                     SettingsView(settingsModel: .shared)
                 }
@@ -29,7 +33,7 @@ struct ChroniquillApp: App {
             }
 
             CommandGroup(replacing: .appInfo) {
-                Button("About Chroniquill…") {
+                Button("About ChroniQuill…") {
                     // TODO: Hook this to WelcomeView or an AboutView
                 }
             }

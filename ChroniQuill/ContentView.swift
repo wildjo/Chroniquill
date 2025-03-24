@@ -14,9 +14,12 @@ struct ContentView: View {
         if let folder = selectedFolder {
             EditorView(folder: folder)
         } else {
-            WelcomeView(onFolderSelected: { folder in
-                self.selectedFolder = folder
-            })
+            WelcomeView(
+                settings: SettingsModel.shared,
+                onFolderSelected: { folder in
+                    // your existing logic here
+                }
+            )
         }
     }
 }

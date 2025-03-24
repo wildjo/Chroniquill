@@ -1,13 +1,13 @@
 //
-//  ChroniquillUITests.swift
-//  ChroniquillUITests
+//  ChroniQuillUITests.swift
+//  ChroniQuillUITests
 //
-//  Created by Johanna Wilder on 3/19/25.
+//  Created by Johanna Wilder and ChatGPT on 3/19/25.
 //
 
 import XCTest
 
-final class ChroniquillUITests: XCTestCase {
+final class ChroniQuillUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

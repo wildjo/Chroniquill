@@ -1,13 +1,13 @@
 //
-//  ChroniquillUITestsLaunchTests.swift
-//  ChroniquillUITests
+//  ChroniQuillUITestsLaunchTests.swift
+//  ChroniQuillUITests
 //
-//  Created by Johanna Wilder on 3/19/25.
+//  Created by Johanna Wilder and ChatGPT on 3/19/25.
 //
 
 import XCTest
 
-final class ChroniquillUITestsLaunchTests: XCTestCase {
+final class ChroniQuillUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
