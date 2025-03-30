@@ -1,8 +1,11 @@
 <img src="chroniquill-logo.png" alt="ChroniQuill Logo" width="399"/>
 
-
 The static site generator for long-form and short-form writing in the cloud.
 
+
+## Features
+
+ChroniQuill is now capable of editing and saving .md files (cannot create them just yet, but we’re working on that!)
 
 
 ## work in progress.

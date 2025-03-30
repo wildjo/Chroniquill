@@ -112,6 +112,17 @@ final class SettingsModel: ObservableObject {
         let fileURL = homeDirectory.appendingPathComponent(ChroniQuillSettings.defaultFilename)
         settingsFileURL = fileURL
 
+        if isInTrash(fileURL) {
+            #if DEBUG
+            print("🗑️ Detected settings.json is in the Trash. Will not load settings from: \(fileURL.path)")
+            print("🛠️ Resetting settings to defaults and showing WelcomeView.")
+            #endif
+            settings = .default
+            isLoaded = false
+            settingsFileURL = nil
+            return
+        }
+
         do {
             let data = try Data(contentsOf: fileURL)
             let decoded = try JSONDecoder().decode(ChroniQuillSettings.self, from: data)
@@ -154,20 +165,69 @@ final class SettingsModel: ObservableObject {
         do {
             let data = try JSONEncoder().encode(settings)
             try data.write(to: fileURL, options: [.atomic])
-                #if DEBUG
-                // Debug: Successfully saved data to settings file
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("✅ Saved settings to file:\n\(jsonString)")
-                } else {
-                    print("✅ Saved settings to file, but couldn't convert to string.")
+            
+            // Ensure base directory structure is created
+            let fileManager = FileManager.default
+            let baseURL = directory
+
+            let subdirectories = [
+                "input",
+                "archive/long-form",
+                "archive/short-form",
+                "reusable-images",
+                "lost-files",
+                "generated-static-html",
+                "plug-ins"
+            ]
+
+            for subdir in subdirectories {
+                let subdirURL = baseURL.appendingPathComponent(subdir)
+                if !fileManager.fileExists(atPath: subdirURL.path) {
+                    do {
+                        try fileManager.createDirectory(at: subdirURL, withIntermediateDirectories: true)
+                        #if DEBUG
+                        print("📁 Created directory at \(subdirURL.path)")
+                        #endif
+                    } catch {
+                        #if DEBUG
+                        print("⚠️ Failed to create directory \(subdir): \(error.localizedDescription)")
+                        #endif
+                    }
                 }
-                #endif
+            }
+            
+            #if DEBUG
+            // Debug: Successfully saved data to settings file
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("✅ Saved settings to file:\n\(jsonString)")
+            } else {
+                print("✅ Saved settings to file, but couldn't convert to string.")
+            }
+            #endif
        } catch {
             #if DEBUG
             // Debug: Error occurred while saving settings to disk
             print("⚠️ Failed to save settings: \(error.localizedDescription)")
             #endif
         }
+    }
+
+    private func isInTrash(_ url: URL) -> Bool {
+        guard let trashURL = try? FileManager.default.url(for: .trashDirectory,
+                                                           in: .userDomainMask,
+                                                           appropriateFor: nil,
+                                                           create: false) else {
+            #if DEBUG
+            print("⚠️ Could not locate the system Trash directory.")
+            #endif
+            return false
+        }
+
+        let result = url.path.hasPrefix(trashURL.path)
+        #if DEBUG
+        print("🧪 isInTrash check: \(url.path) starts with \(trashURL.path)? \(result)")
+        #endif
+        return result
     }
 
     /// Whether the app has a usable home directory saved locally (via security bookmark).
