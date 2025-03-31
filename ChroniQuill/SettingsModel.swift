@@ -24,6 +24,31 @@ struct ChroniQuillSettings: Codable, Equatable {
     )
 }
 
+extension SettingsModel {
+    func isFormTypeEnabled(_ type: String) -> Bool {
+        switch type {
+        case "long-form":
+            return settings.longFormEnabled
+        case "short-form":
+            return settings.shortFormEnabled
+        default:
+            return false
+        }
+    }
+}
+
+extension SettingsModel {
+    func formType(for url: URL) -> String? {
+        let path = url.path
+        for type in ["long-form", "short-form"] where isFormTypeEnabled(type) {
+            if path.contains("/\(type)/") {
+                return type
+            }
+        }
+        return nil
+    }
+}
+
 @MainActor
 final class SettingsModel: ObservableObject {
     @Published var settings: ChroniQuillSettings = .default
