@@ -384,7 +384,12 @@ struct EditorView: View {
     private func createBackup(for file: URL) {
         let backupURL = file.deletingPathExtension().appendingPathExtension("_old.md")
         do {
-            try FileManager.default.copyItem(at: file, to: backupURL)
+            // Overwrite any existing backup so it always mirrors the last saved state
+            let fm = FileManager.default
+            if fm.fileExists(atPath: backupURL.path) {
+                try fm.removeItem(at: backupURL)
+            }
+            try fm.copyItem(at: file, to: backupURL)
 #if DEBUG
             print("📦 Backup created for: \(file.lastPathComponent)")
 #endif
