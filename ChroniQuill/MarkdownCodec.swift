@@ -37,12 +37,6 @@ extension AttributeScopes {
     var chroniquill: ChroniquillAttributes.Type { ChroniquillAttributes.self }
 }
 
-extension AttributeDynamicLookup {
-    subscript<T>(dynamicMember keyPath: KeyPath<AttributeScopes.ChroniquillAttributes, T>) -> T where T: AttributedStringKey {
-        self[AttributeScopes.ChroniquillAttributes.self][keyPath: keyPath]
-    }
-}
-
 // MARK: - Document container
 
 struct MarkdownDocument {
@@ -108,7 +102,7 @@ enum MarkdownCodec {
             }
 
             let substring = attributed[run.range]
-            sanitized.append(AttributedString(substring.characters, attributes: container))
+            sanitized.append(AttributedString(String(substring.characters), attributes: container))
         }
         return sanitized
     }
@@ -191,7 +185,7 @@ enum MarkdownCodec {
             for run in inlineString.runs {
                 var mergedAttributes = container
                 mergedAttributes.merge(run.attributes)
-                let segment = AttributedString(inlineString[run.range].characters, attributes: mergedAttributes)
+                let segment = AttributedString(String(inlineString[run.range].characters), attributes: mergedAttributes)
                 blockString.append(segment)
             }
 
@@ -295,31 +289,39 @@ enum MarkdownCodec {
         var collected: [ParsedBlock] = []
         var current = AttributedString()
         var currentKind: RichBlockKind = .paragraph
-        var index = attributed.startIndex
+        var pendingNewlines = 0
 
-        while index < attributed.endIndex {
-            if let run = attributed.runs.first(where: { $0.range.contains(index) }),
-               let block = run.attributes[MarkdownBlockAttribute.self] {
+        for run in attributed.runs {
+            if let block = run.attributes[MarkdownBlockAttribute.self] {
                 currentKind = block
             }
 
-            if attributed[index] == "\n" {
-                let next = attributed.index(after: index)
-                if next < attributed.endIndex && attributed[next] == "\n" {
+            let substring = attributed[run.range]
+            for character in substring.characters {
+                if character == "\n" {
+                    pendingNewlines += 1
+                    continue
+                }
+
+                if pendingNewlines >= 2 {
                     collected.append(ParsedBlock(kind: currentKind, text: encodeInline(current)))
                     current = AttributedString()
                     currentKind = .paragraph
-                    index = attributed.index(after: next)
-                    continue
-                } else {
+                    pendingNewlines = 0
+                } else if pendingNewlines == 1 {
                     current.append(AttributedString("\n"))
-                    index = next
-                    continue
+                    pendingNewlines = 0
                 }
-            }
 
-            current.append(AttributedString(String(attributed[index])))
-            index = attributed.index(after: index)
+                current.append(AttributedString(String(character), attributes: run.attributes))
+            }
+        }
+
+        if pendingNewlines >= 2 && !current.isEmpty {
+            collected.append(ParsedBlock(kind: currentKind, text: encodeInline(current)))
+            current = AttributedString()
+        } else if pendingNewlines == 1 {
+            current.append(AttributedString("\n"))
         }
 
         if !current.isEmpty {
