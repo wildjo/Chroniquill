@@ -566,7 +566,7 @@ struct EditorView: View {
 
     private func handlePaste(_ providers: [NSItemProvider]) {
         for provider in providers {
-            if provider.hasItemConforming(to: .rtf) {
+            if provider.hasItemConformingToTypeIdentifier(UTType.rtf.identifier) {
                 provider.loadDataRepresentation(forTypeIdentifier: UTType.rtf.identifier) { data, _ in
                     guard let data, let rich = NSAttributedString(rtf: data, documentAttributes: nil) else { return }
                     DispatchQueue.main.async {
@@ -576,7 +576,7 @@ struct EditorView: View {
                 return
             }
 
-            if provider.hasItemConforming(to: .plainText) {
+            if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                 provider.loadDataRepresentation(forTypeIdentifier: UTType.plainText.identifier) { data, _ in
                     guard let data, let value = String(data: data, encoding: .utf8) else { return }
                     DispatchQueue.main.async {
