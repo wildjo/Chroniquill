@@ -104,22 +104,39 @@ struct EditorView: View {
                         }
                         .padding()
                     
-                    TextEditor(text: $renderedBody)
-                        .padding()
-                        .border(Color.gray, width: 1)
-                        .onChange(of: renderedBody) { _, newValue in
-                            if !isProgrammaticChange {
-                                let sanitized = MarkdownCodec.sanitizeForEditing(newValue)
-                                if sanitized != renderedBody {
-                                    renderedBody = sanitized
+                    if #available(macOS 13.0, iOS 16.0, *) {
+                        TextEditor(text: $renderedBody)
+                            .padding()
+                            .border(Color.gray, width: 1)
+                            .onChange(of: renderedBody) { _, newValue in
+                                if !isProgrammaticChange {
+                                    let sanitized = MarkdownCodec.sanitizeForEditing(newValue)
+                                    if sanitized != renderedBody {
+                                        renderedBody = sanitized
+                                    }
+                                    document.body = sanitized
+                                    evaluateEditingState()
                                 }
-                                document.body = sanitized
+                            }
+                            .onPasteCommand(of: [.text, .plainText, .rtf]) { providers in
+                                handlePaste(providers)
+                            }
+                    } else {
+                        TextEditor(text: Binding(
+                            get: { String(renderedBody.characters) },
+                            set: { newValue in
+                                let attributed = MarkdownCodec.sanitizeForEditing(AttributedString(newValue))
+                                renderedBody = attributed
+                                document.body = attributed
                                 evaluateEditingState()
                             }
-                        }
+                        ))
+                        .padding()
+                        .border(Color.gray, width: 1)
                         .onPasteCommand(of: [.text, .plainText, .rtf]) { providers in
                             handlePaste(providers)
                         }
+                    }
                 } else {
                     Text("Select a file to edit")
                         .foregroundColor(.gray)
@@ -482,7 +499,7 @@ struct EditorView: View {
             fileChanged = exported != currentDiskContents
         } catch {
             // If we can't read the file, assume content might have changed if editor isn't empty
-            fileChanged = !renderedBody.isEmpty
+            fileChanged = !renderedBody.characters.isEmpty
             print("⚠️ Could not read original file content for comparison: \(error.localizedDescription)")
         }
         #if DEBUG
@@ -549,19 +566,19 @@ struct EditorView: View {
 
     private func handlePaste(_ providers: [NSItemProvider]) {
         for provider in providers {
-            if provider.canLoadObject(ofClass: NSAttributedString.self) {
-                _ = provider.loadObject(ofClass: NSAttributedString.self) { object, _ in
-                    guard let value = object as? NSAttributedString else { return }
+            if provider.hasItemConforming(to: .rtf) {
+                provider.loadDataRepresentation(forTypeIdentifier: UTType.rtf.identifier) { data, _ in
+                    guard let data, let rich = NSAttributedString(rtf: data, documentAttributes: nil) else { return }
                     DispatchQueue.main.async {
-                        applyPastedAttributed(AttributedString(value))
+                        applyPastedAttributed(AttributedString(rich))
                     }
                 }
                 return
             }
 
-            if provider.canLoadObject(ofClass: String.self) {
-                _ = provider.loadObject(ofClass: String.self) { object, _ in
-                    guard let value = object as? String else { return }
+            if provider.hasItemConforming(to: .plainText) {
+                provider.loadDataRepresentation(forTypeIdentifier: UTType.plainText.identifier) { data, _ in
+                    guard let data, let value = String(data: data, encoding: .utf8) else { return }
                     DispatchQueue.main.async {
                         applyPastedAttributed(AttributedString(value))
                     }

@@ -316,14 +316,16 @@ enum MarkdownCodec {
             }
         }
 
-        if pendingNewlines >= 2 && !current.characters.isEmpty {
+        let hasContent = current.characters.count > 0
+
+        if pendingNewlines >= 2 && hasContent {
             collected.append(ParsedBlock(kind: currentKind, text: current))
             current = AttributedString()
         } else if pendingNewlines == 1 {
             current.append(AttributedString("\n"))
         }
 
-        if !current.characters.isEmpty {
+        if hasContent || !current.characters.isEmpty {
             collected.append(ParsedBlock(kind: currentKind, text: current))
         }
 
