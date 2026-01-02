@@ -110,7 +110,7 @@ enum MarkdownCodec {
     /// Transform pasted rich text into the supported model. Currently this
     /// simply routes to `sanitizeForEditing` but is kept separate for clarity.
     static func sanitizePastedContent(_ attributed: AttributedString) -> AttributedString {
-        sanitizeForEditing(attributed)
+        return sanitizeForEditing(attributed)
     }
 
     // MARK: - Internal parsing helpers
@@ -316,14 +316,14 @@ enum MarkdownCodec {
             }
         }
 
-        if pendingNewlines >= 2 && !current.isEmpty {
+        if pendingNewlines >= 2 && !current.characters.isEmpty {
             collected.append(ParsedBlock(kind: currentKind, text: current))
             current = AttributedString()
         } else if pendingNewlines == 1 {
             current.append(AttributedString("\n"))
         }
 
-        if !current.isEmpty {
+        if !current.characters.isEmpty {
             collected.append(ParsedBlock(kind: currentKind, text: current))
         }
 
