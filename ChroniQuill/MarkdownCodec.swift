@@ -117,7 +117,7 @@ enum MarkdownCodec {
 
     private struct ParsedBlock {
         var kind: RichBlockKind
-        var text: String
+        var text: AttributedString
     }
 
     private static func extractFrontMatter(from markdown: String) -> (String?, String) {
@@ -149,14 +149,14 @@ enum MarkdownCodec {
                 let level = trimmed[range].count
                 let textRange = Range(headingMatch.range(at: 2), in: trimmed) ?? trimmed.startIndex..<trimmed.endIndex
                 let content = String(trimmed[textRange])
-                blocks.append(ParsedBlock(kind: .heading(level), text: content))
+                blocks.append(ParsedBlock(kind: .heading(level), text: makeInlineAttributedString(from: content)))
                 continue
             }
 
             if let unorderedMatch = unorderedListRegex.firstMatch(in: trimmed, options: [], range: NSRange(location: 0, length: (trimmed as NSString).length)),
                let textRange = Range(unorderedMatch.range(at: 1), in: trimmed) {
                 let content = String(trimmed[textRange])
-                blocks.append(ParsedBlock(kind: .unorderedListItem, text: content))
+                blocks.append(ParsedBlock(kind: .unorderedListItem, text: makeInlineAttributedString(from: content)))
                 continue
             }
 
@@ -165,11 +165,11 @@ enum MarkdownCodec {
                let textRange = Range(orderedMatch.range(at: 2), in: trimmed) {
                 let ordinal = Int(trimmed[numberRange]) ?? 1
                 let content = String(trimmed[textRange])
-                blocks.append(ParsedBlock(kind: .orderedListItem(ordinal), text: content))
+                blocks.append(ParsedBlock(kind: .orderedListItem(ordinal), text: makeInlineAttributedString(from: content)))
                 continue
             }
 
-            blocks.append(ParsedBlock(kind: .paragraph, text: trimmed))
+            blocks.append(ParsedBlock(kind: .paragraph, text: makeInlineAttributedString(from: trimmed)))
         }
         return blocks
     }
@@ -179,13 +179,12 @@ enum MarkdownCodec {
         for (index, block) in blocks.enumerated() {
             var container = AttributeContainer()
             container[MarkdownBlockAttribute.self] = block.kind
-            let inlineString = makeInlineAttributedString(from: block.text)
             var blockString = AttributedString()
 
-            for run in inlineString.runs {
+            for run in block.text.runs {
                 var mergedAttributes = container
                 mergedAttributes.merge(run.attributes)
-                let segment = AttributedString(String(inlineString[run.range].characters), attributes: mergedAttributes)
+                let segment = AttributedString(String(block.text[run.range].characters), attributes: mergedAttributes)
                 blockString.append(segment)
             }
 
@@ -304,7 +303,7 @@ enum MarkdownCodec {
                 }
 
                 if pendingNewlines >= 2 {
-                    collected.append(ParsedBlock(kind: currentKind, text: encodeInline(current)))
+                    collected.append(ParsedBlock(kind: currentKind, text: current))
                     current = AttributedString()
                     currentKind = .paragraph
                     pendingNewlines = 0
@@ -318,14 +317,14 @@ enum MarkdownCodec {
         }
 
         if pendingNewlines >= 2 && !current.isEmpty {
-            collected.append(ParsedBlock(kind: currentKind, text: encodeInline(current)))
+            collected.append(ParsedBlock(kind: currentKind, text: current))
             current = AttributedString()
         } else if pendingNewlines == 1 {
             current.append(AttributedString("\n"))
         }
 
         if !current.isEmpty {
-            collected.append(ParsedBlock(kind: currentKind, text: encodeInline(current)))
+            collected.append(ParsedBlock(kind: currentKind, text: current))
         }
 
         return collected
