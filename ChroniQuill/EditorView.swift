@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FolderNode: Identifiable {
     let id = UUID()
@@ -22,7 +23,9 @@ struct EditorView: View {
     let folder: URL
     @State private var markdownFiles: [URL] = []
     @State private var selectedFile: URL?
-    @State private var fileContents: String = ""
+    @State private var document = MarkdownDocument(frontMatter: nil, body: AttributedString())
+    @State private var renderedBody: AttributedString = AttributedString()
+    @State private var lastSavedMarkdown: String = ""
     @State private var hasEdited = false
     @State private var hasBackup = false
     @State private var folderTree: [FolderNode] = []
@@ -101,14 +104,39 @@ struct EditorView: View {
                         }
                         .padding()
                     
-                    TextEditor(text: $fileContents)
-                        .padding()
-                        .border(Color.gray, width: 1)
-                        .onChange(of: fileContents) {
-                            if !isProgrammaticChange {
+                    if #available(macOS 13.0, iOS 16.0, *) {
+                        TextEditor(text: $renderedBody)
+                            .padding()
+                            .border(Color.gray, width: 1)
+                            .onChange(of: renderedBody) { _, newValue in
+                                if !isProgrammaticChange {
+                                    let sanitized = MarkdownCodec.sanitizeForEditing(newValue)
+                                    if sanitized != renderedBody {
+                                        renderedBody = sanitized
+                                    }
+                                    document.body = sanitized
+                                    evaluateEditingState()
+                                }
+                            }
+                            .onPasteCommand(of: [.text, .plainText, .rtf]) { providers in
+                                handlePaste(providers)
+                            }
+                    } else {
+                        TextEditor(text: Binding(
+                            get: { String(renderedBody.characters) },
+                            set: { newValue in
+                                let attributed = MarkdownCodec.sanitizeForEditing(AttributedString(newValue))
+                                renderedBody = attributed
+                                document.body = attributed
                                 evaluateEditingState()
                             }
+                        ))
+                        .padding()
+                        .border(Color.gray, width: 1)
+                        .onPasteCommand(of: [.text, .plainText, .rtf]) { providers in
+                            handlePaste(providers)
                         }
+                    }
                 } else {
                     Text("Select a file to edit")
                         .foregroundColor(.gray)
@@ -209,7 +237,10 @@ struct EditorView: View {
             }
 
             // Update state variables
-            fileContents = newContents
+            let parsedDocument = MarkdownCodec.importDocument(markdown: newContents)
+            document = parsedDocument
+            renderedBody = parsedDocument.body
+            lastSavedMarkdown = MarkdownCodec.exportDocument(parsedDocument)
             fileName = newName // Update TextField content
             selectedDate = newDate // Update DatePicker
             selectedFile = file
@@ -233,7 +264,9 @@ struct EditorView: View {
             print("Error loading file: \(error.localizedDescription)")
             // Reset state if loading fails
             isProgrammaticChange = false
-            fileContents = ""
+            document = MarkdownDocument(frontMatter: nil, body: AttributedString())
+            renderedBody = AttributedString()
+            lastSavedMarkdown = ""
             fileName = "Error.md"
             selectedDate = Date()
             selectedFile = nil
@@ -304,7 +337,8 @@ struct EditorView: View {
             #if DEBUG
             print("💾 Writing content to: \(currentFile.path)")
             #endif
-            try fileContents.write(to: currentFile, atomically: true, encoding: .utf8)
+            let markdownToWrite = MarkdownCodec.exportDocument(MarkdownDocument(frontMatter: document.frontMatter, body: renderedBody))
+            try markdownToWrite.write(to: currentFile, atomically: true, encoding: .utf8)
 
              // 4. Update State and UI
              // Delete old backup only if file was moved/renamed
@@ -319,6 +353,8 @@ struct EditorView: View {
 
             pendingDate = nil // Clear pending states
             pendingFileName = nil
+            lastSavedMarkdown = markdownToWrite
+            document.body = renderedBody
 
             buildFolderTree() // Update file hierarchy view
             evaluateEditingState() // Reset button states (should set hasEdited=false)
@@ -338,7 +374,10 @@ struct EditorView: View {
 
             // Restore content from backup
             let restoredContents = try String(contentsOf: backupURL, encoding: .utf8)
-            fileContents = restoredContents // Update editor view
+            let restoredDocument = MarkdownCodec.importDocument(markdown: restoredContents)
+            document = restoredDocument
+            renderedBody = restoredDocument.body // Update editor view
+            lastSavedMarkdown = MarkdownCodec.exportDocument(restoredDocument)
 
             // Also revert filename and date if they were pending changes
              fileName = selectedFile.deletingPathExtension().lastPathComponent
@@ -362,7 +401,6 @@ struct EditorView: View {
             pendingDate = nil // Clear pending date change
 
             // Overwrite the main file with restored content (optional, could just reset state)
-            // try fileContents.write(to: selectedFile, atomically: true, encoding: .utf8)
             // createBackup(for: selectedFile) // Re-create backup if main file is overwritten
 
             #if DEBUG
@@ -457,10 +495,11 @@ struct EditorView: View {
         do {
             // Compare current editor content with the content *currently* on disk at selectedFile URL
             let currentDiskContents = try String(contentsOf: selected, encoding: .utf8)
-            fileChanged = fileContents != currentDiskContents
+            let exported = MarkdownCodec.exportDocument(MarkdownDocument(frontMatter: document.frontMatter, body: renderedBody))
+            fileChanged = exported != currentDiskContents
         } catch {
             // If we can't read the file, assume content might have changed if editor isn't empty
-            fileChanged = !fileContents.isEmpty
+            fileChanged = !renderedBody.characters.isEmpty
             print("⚠️ Could not read original file content for comparison: \(error.localizedDescription)")
         }
         #if DEBUG
@@ -521,8 +560,39 @@ struct EditorView: View {
         let dayFormatter = DateFormatter()
         dayFormatter.dateFormat = "dd EEEE"
         let day = dayFormatter.string(from: date)
-        
+
         return "\(year)/\(month)/\(day)"
+    }
+
+    private func handlePaste(_ providers: [NSItemProvider]) {
+        for provider in providers {
+            if provider.hasItemConformingToTypeIdentifier(UTType.rtf.identifier) {
+                provider.loadDataRepresentation(forTypeIdentifier: UTType.rtf.identifier) { data, _ in
+                    guard let data, let rich = NSAttributedString(rtf: data, documentAttributes: nil) else { return }
+                    DispatchQueue.main.async {
+                        applyPastedAttributed(AttributedString(rich))
+                    }
+                }
+                return
+            }
+
+            if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                provider.loadDataRepresentation(forTypeIdentifier: UTType.plainText.identifier) { data, _ in
+                    guard let data, let value = String(data: data, encoding: .utf8) else { return }
+                    DispatchQueue.main.async {
+                        applyPastedAttributed(AttributedString(value))
+                    }
+                }
+                return
+            }
+        }
+    }
+
+    private func applyPastedAttributed(_ attributed: AttributedString) {
+        let sanitized = MarkdownCodec.sanitizePastedContent(attributed)
+        renderedBody.append(sanitized)
+        document.body = renderedBody
+        evaluateEditingState()
     }
     
     private func sanitizedFileName(from name: String) -> String {
